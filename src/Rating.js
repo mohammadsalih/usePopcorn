@@ -1,56 +1,78 @@
 import { useState } from "react";
+import PropTypes from "prop-types";
 
 const containerStyle = {
   display: "flex",
-  alignItems: "cernter",
+  alignItems: "center",
   gap: "16px",
 };
 
 const starContainerStyle = {
   display: "flex",
-  alignItems: "cernter",
+  alignItems: "center",
 };
 
-const textStyle = {
-  margen: "0",
-  lineHeight: "1",
+Rating.propTypes = {
+  maxRating: PropTypes.number,
+  color: PropTypes.string,
+  size: PropTypes.number,
+  className: PropTypes.string,
+  defualtRating: PropTypes.number,
+  onSetRating: PropTypes.func,
 };
 
-const starStyle = {
-  display: "block",
-  width: "24px",
-  height: "24px",
-  cursor: "pointer",
-};
-
-export default function Rating({ maxRating = 5 }) {
-  const [rating, setRating] = useState(0);
+export default function Rating({
+  maxRating = 5,
+  color = "#fff",
+  size = "24",
+  className = "",
+  defualtRating = 0,
+  onSetRating,
+}) {
+  const [rating, setRating] = useState(defualtRating);
   const [tempRating, setTempRating] = useState(0);
+
+  const textStyle = {
+    margen: "0",
+    lineHeight: "1",
+    color: color,
+    fontSize: `${size / 2}px`,
+  };
 
   function handleRating(rating) {
     setRating(rating);
+    onSetRating(rating);
   }
 
   return (
-    <div style={containerStyle}>
+    <div style={containerStyle} className={className}>
       <div style={starContainerStyle}>
         {Array.from({ length: maxRating }, (_, i) => (
           <Star
             key={i}
+            color={color}
+            size={size}
             full={tempRating ? tempRating >= i + 1 : rating >= i + 1}
             onRate={() => handleRating(i + 1)}
             onHoverIn={() => setTempRating(i + 1)}
             onHoverOut={() => setTempRating(0)}
           />
         ))}
-
-        <p style={textStyle}>{tempRating || rating || ""}</p>
       </div>
+
+      <p style={textStyle}>{tempRating || rating || ""}</p>
     </div>
   );
 }
 
-function Star({ onRate, full, onHoverIn, onHoverOut }) {
+function Star({ onRate, full, onHoverIn, onHoverOut, color, size }) {
+  const starStyle = {
+    display: "block",
+    width: `${size}px`,
+    height: `${size}px`,
+    cursor: "pointer",
+  };
+
   return (
     <span
       style={starStyle}
@@ -62,8 +84,8 @@ function Star({ onRate, full, onHoverIn, onHoverOut }) {
         <svg
           xmlns="http://www.w3.org/2000/svg"
           viewBox="0 0 20 20"
-          fill="#000"
-          stroke="#000"
+          fill={color}
+          stroke={color}
         >
           <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
         </svg>
@@ -72,7 +94,7 @@ function Star({ onRate, full, onHoverIn, onHoverOut }) {
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
-          stroke="#000"
+          stroke={color}
         >
           <path
             strokeLinecap="round"
