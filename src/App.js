@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import { IonIcon } from "@ionic/react";
+import { arrowBackOutline } from "ionicons/icons";
 import StarRating from "./Rating.js";
 
 const apikey = "5310ad9c";
@@ -254,7 +256,7 @@ function MovieDetails({ selectedId, onCloseMovie }) {
         <>
           <header>
             <button className="btn-back" onClick={onCloseMovie}>
-              &larr;
+              <IonIcon icon={arrowBackOutline} />
             </button>
 
             <img src={poster} alt={`poster of ${title}`} />
