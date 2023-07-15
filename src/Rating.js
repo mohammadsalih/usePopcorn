@@ -41,6 +41,7 @@ export default function Rating({
 
   function handleRating(rating) {
     setRating(rating);
+    if (!onSetRating) return;
     onSetRating(rating);
   }
 

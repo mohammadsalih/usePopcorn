@@ -1,76 +1,105 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import StarRating from "./Rating.js";
 
-const tempMovieData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt0133093",
-    Title: "The Matrix",
-    Year: "1999",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BNzQzOTk3OTAtNDQ0Zi00ZTVkLWI0MTEtMDllZjNkYzNjNTc4L2ltYWdlXkEyXkFqcGdeQXVyNjU0OTQ0OTY@._V1_SX300.jpg",
-  },
-  {
-    imdbID: "tt6751668",
-    Title: "Parasite",
-    Year: "2019",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BYWZjMjk3ZTItODQ2ZC00NTY5LWE0ZDYtZTI3MjcwN2Q5NTVkXkEyXkFqcGdeQXVyODk4OTc3MTY@._V1_SX300.jpg",
-  },
-];
-
-const tempWatchedData = [
-  {
-    imdbID: "tt1375666",
-    Title: "Inception",
-    Year: "2010",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BMjAxMzY3NjcxNF5BMl5BanBnXkFtZTcwNTI5OTM0Mw@@._V1_SX300.jpg",
-    runtime: 148,
-    imdbRating: 8.8,
-    userRating: 10,
-  },
-  {
-    imdbID: "tt0088763",
-    Title: "Back to the Future",
-    Year: "1985",
-    Poster:
-      "https://m.media-amazon.com/images/M/MV5BZmU0M2Y1OGUtZjIxNi00ZjBkLTg1MjgtOWIyNThiZWIwYjRiXkEyXkFqcGdeQXVyMTQxNzMzNDI@._V1_SX300.jpg",
-    runtime: 116,
-    imdbRating: 8.5,
-    userRating: 9,
-  },
-];
+const apikey = "5310ad9c";
 
 const average = (arr) =>
-  arr.reduce((acc, cur, i, arr) => acc + cur / arr.length, 0);
+  arr.reduce((acc, cur, _, arr) => acc + cur / arr.length, 0);
 
 export default function App() {
-  const [movies, setMovies] = useState(tempMovieData);
-  const [watched, setWatched] = useState(tempWatchedData);
+  const [movies, setMovies] = useState([]);
+  const [watched, setWatched] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedId, setSelectedId] = useState(null);
+  const [error, setError] = useState("");
+  const [query, setQuery] = useState("");
+
+  function handleSelectedMovie(selectedMovieId) {
+    setSelectedId((selectedId) =>
+      selectedId === selectedMovieId ? null : selectedMovieId
+    );
+  }
+  function handleCloseMovie() {
+    setSelectedId(null);
+  }
+
+  useEffect(
+    function () {
+      async function fetchMovies() {
+        try {
+          setError("");
+          setIsLoading(true);
+
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${apikey}&s=${query}`
+          );
+
+          if (!res.ok)
+            throw new Error(
+              "Something went wrong with fetching movies"
+            );
+
+          const data = await res.json();
+
+          if (data.Response === "False")
+            throw new Error("Movies not found");
+
+          setMovies(data.Search);
+        } catch (err) {
+          console.error(err.message);
+          setError(err.message);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
+      if (query.length < 3) {
+        setMovies([]);
+        setError("");
+        setIsLoading(false);
+        return;
+      }
+
+      fetchMovies();
+    },
+    [query]
+  );
 
   return (
     <>
       <NavBar>
-        <Search />
+        <Search onSetQuery={setQuery} query={query} />
 
-        <ResultsNumber numberOfResults={movies.length} />
+        <ResultsNumber numberOfResults={movies ? movies.length : 0} />
       </NavBar>
 
       <Main>
         <Box>
-          <MoviesList movies={movies} />
+          {error ? (
+            <ErrorMessage message={error} />
+          ) : isLoading ? (
+            <Loader message={"movies are loading..."} />
+          ) : (
+            <MoviesList
+              movies={movies}
+              onSelectMovie={handleSelectedMovie}
+            />
+          )}
         </Box>
 
         <Box>
-          <WatchedSummary watched={watched} />
+          {selectedId ? (
+            <MovieDetails
+              selectedId={selectedId}
+              onCloseMovie={handleCloseMovie}
+            />
+          ) : (
+            <>
+              <WatchedSummary watched={watched} />
 
-          <WatchedMoviesList watched={watched} />
+              <WatchedMoviesList watched={watched} />
+            </>
+          )}
         </Box>
       </Main>
     </>
@@ -95,16 +124,16 @@ function Logo() {
   );
 }
 
-function Search() {
-  const [query, setQuery] = useState("");
-
+function Search({ query, onSetQuery }) {
   return (
     <input
       className="search"
       type="text"
       placeholder="Search movies..."
       value={query}
-      onChange={(e) => setQuery(e.target.value)}
+      onChange={(e) => {
+        onSetQuery(e.target.value);
+      }}
     />
   );
 }
@@ -138,18 +167,22 @@ function Box({ children }) {
   );
 }
 
-function MoviesList({ movies }) {
+function MoviesList({ movies, onSelectMovie }) {
   return (
-    <ul className="list">
+    <ul className="list list-movies">
       {movies?.map((movie) => (
-        <Movie movie={movie} key={movie.imdbID} />
+        <Movie
+          movie={movie}
+          key={movie.imdbID}
+          onSelectMovie={onSelectMovie}
+        />
       ))}
     </ul>
   );
 }
-function Movie({ movie }) {
+function Movie({ movie, onSelectMovie }) {
   return (
-    <li>
+    <li onClick={() => onSelectMovie(movie.imdbID)}>
       <img src={movie.Poster} alt={`${movie.Title} poster`} />
       <h3>{movie.Title}</h3>
       <div>
@@ -159,6 +192,102 @@ function Movie({ movie }) {
         </p>
       </div>
     </li>
+  );
+}
+
+function MovieDetails({ selectedId, onCloseMovie }) {
+  const [movie, setMovie] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const {
+    Title: title,
+    // Year: year,
+    Poster: poster,
+    imdbRating,
+    Plot: plot,
+    Released: released,
+    Actors: actors,
+    Director: director,
+    Genre: genre,
+    Runtime: runtime,
+  } = movie;
+
+  useEffect(
+    function () {
+      async function fetchMovie() {
+        try {
+          setIsLoading(true);
+
+          const res = await fetch(
+            `http://www.omdbapi.com/?apikey=${apikey}&i=${selectedId}`
+          );
+
+          if (!res.ok)
+            throw new Error(
+              "Something went wrong with fetching movies"
+            );
+
+          const data = await res.json();
+
+          if (data.Response === "False")
+            throw new Error("Movies not found");
+
+          setMovie(data);
+        } catch (err) {
+          console.error(err.message);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+
+      if (selectedId.length < 4) return;
+
+      fetchMovie();
+    },
+    [selectedId]
+  );
+
+  return (
+    <div className="details">
+      {isLoading ? (
+        <Loader message={"movie data is loadin..."} />
+      ) : (
+        <>
+          <header>
+            <button className="btn-back" onClick={onCloseMovie}>
+              &larr;
+            </button>
+
+            <img src={poster} alt={`poster of ${title}`} />
+
+            <div className="details-overview">
+              <h2>{title}</h2>
+
+              <p>
+                {released} &bull; {runtime}
+              </p>
+
+              <p>{genre}</p>
+
+              <p>⭐️ {imdbRating} IMDB Rating</p>
+            </div>
+          </header>
+
+          <section>
+            <div className="rating">
+              <StarRating maxRating={10} color="#fcc419" size="26" />
+            </div>
+
+            <p>
+              <em>{plot}</em>
+            </p>
+
+            <p>staring actors : {actors}</p>
+
+            <p>directed by : {director}</p>
+          </section>
+        </>
+      )}
+    </div>
   );
 }
 
@@ -225,5 +354,17 @@ function WatchedMovie({ movie }) {
         </p>
       </div>
     </li>
+  );
+}
+
+function Loader({ message }) {
+  return <p className="loader">{message}</p>;
+}
+
+function ErrorMessage({ message }) {
+  return (
+    <p className="error">
+      <span>⛔️</span> {message}
+    </p>
   );
 }
