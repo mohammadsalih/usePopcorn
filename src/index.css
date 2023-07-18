@@ -215,6 +215,7 @@ body {
 
 .summary {
   margin-top: -2.4rem;
+  margin-bottom: 3rem;
   position: sticky;
   z-index: 10;
   top: 0;
