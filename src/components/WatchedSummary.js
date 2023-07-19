@@ -1,5 +1,5 @@
 import React from "react";
-import { calculateAverage } from "./helpers";
+import { calculateAverage } from "../helpers/helpers";
 
 export default function WatchedSummary({ watchedMovies }) {
   const avgImdbRating = calculateAverage(

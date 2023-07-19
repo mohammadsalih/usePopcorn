@@ -1,9 +1,10 @@
-import React, { useState, useEffect, useMemo } from "react";
-import { IonIcon } from "@ionic/react";
+import { useState, useEffect, useMemo } from "react";
 import { arrowBackOutline } from "ionicons/icons";
+import { IonIcon } from "@ionic/react";
+import { API_KEY } from "../helpers/helpers";
 import StarRating from "./Rating";
 import Loader from "./Loader";
-import { API_KEY } from "./helpers";
+import { useKeyPress } from "../custom hooks/useKeyPress";
 
 export default function MovieDetails({
   selectedMovieId,
@@ -48,19 +49,7 @@ export default function MovieDetails({
     onCloseMovie();
   }
 
-  useEffect(() => {
-    function callBack(e) {
-      if (e.code === "Escape") {
-        onCloseMovie();
-      }
-    }
-
-    document.addEventListener("keydown", callBack);
-
-    return () => {
-      document.removeEventListener("keydown", callBack);
-    };
-  }, [onCloseMovie]);
+  useKeyPress("Escape", onCloseMovie);
 
   useEffect(() => {
     async function fetchMovie() {
